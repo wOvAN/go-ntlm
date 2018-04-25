@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/ThomsonReutersEikon/go-ntlm/ntlm"
+	"github.com/wovan/go-ntlm/ntlm"
 )
 
 func main() {
