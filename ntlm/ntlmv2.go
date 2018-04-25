@@ -156,8 +156,8 @@ func (n *V2ServerSession) ProcessNegotiateMessage(nm *NegotiateMessage) (err err
 
 func (n *V2ServerSession) GenerateChallengeMessage() (cm *ChallengeMessage, err error) {
 	cm = new(ChallengeMessage)
-	cm.Signature = []byte("NTLMSSP\x00")
-	cm.MessageType = uint32(2)
+	cm.Signature = []byte(SIGN_NTLMSSP)
+	cm.MessageType = CHALLENGE_MESSAGE
 	cm.TargetName, _ = CreateBytePayload(make([]byte, 0))
 
 	flags := uint32(0)
@@ -180,13 +180,16 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *ChallengeMessage, err 
 	cm.ServerChallenge = n.serverChallenge
 	cm.Reserved = make([]byte, 8)
 
+	domain := string(n.negotiateMessage.DomainName.Payload)
+	workstation := string(n.negotiateMessage.Workstation.Payload)
+
 	// Create the AvPairs we need
 	pairs := new(AvPairs)
-	pairs.AddAvPair(MsvAvNbDomainName, utf16FromString("REUTERS"))
-	pairs.AddAvPair(MsvAvNbComputerName, utf16FromString("UKBP-CBTRMFE06"))
-	pairs.AddAvPair(MsvAvDnsDomainName, utf16FromString("Reuters.net"))
-	pairs.AddAvPair(MsvAvDnsComputerName, utf16FromString("ukbp-cbtrmfe06.Reuters.net"))
-	pairs.AddAvPair(MsvAvDnsTreeName, utf16FromString("Reuters.net"))
+	pairs.AddAvPair(MsvAvNbDomainName, utf16FromString(domain))
+	pairs.AddAvPair(MsvAvNbComputerName, utf16FromString(workstation))
+	pairs.AddAvPair(MsvAvDnsDomainName, utf16FromString(""))
+	pairs.AddAvPair(MsvAvDnsComputerName, utf16FromString(""))
+	pairs.AddAvPair(MsvAvDnsTreeName, utf16FromString(""))
 	pairs.AddAvPair(MsvAvEOL, make([]byte, 0))
 	cm.TargetInfo = pairs
 	cm.TargetInfoPayloadStruct, _ = CreateBytePayload(pairs.Bytes())

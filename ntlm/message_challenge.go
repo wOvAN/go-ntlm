@@ -14,7 +14,7 @@ type ChallengeMessage struct {
 	// sig - 8 bytes
 	Signature []byte
 	// message type - 4 bytes
-	MessageType uint32
+	MessageType MessageType
 	// targetname - 12 bytes
 	TargetName *PayloadStruct
 	// negotiate flags - 4bytes
@@ -57,7 +57,7 @@ func ParseChallengeMessage(body []byte) (*ChallengeMessage, error) {
 	challenge := new(ChallengeMessage)
 
 	challenge.Signature = body[0:8]
-	if !bytes.Equal(challenge.Signature, []byte("NTLMSSP\x00")) {
+	if !bytes.Equal(challenge.Signature, []byte(SIGN_NTLMSSP)) {
 		return challenge, errors.New("Invalid NTLM message signature")
 	}
 

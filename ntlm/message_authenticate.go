@@ -14,7 +14,7 @@ type AuthenticateMessage struct {
 	// sig - 8 bytes
 	Signature []byte
 	// message type - 4 bytes
-	MessageType uint32
+	MessageType MessageType
 
 	// The LmChallenge Response can be v1 or v2
 	LmChallengeResponse *PayloadStruct // 8 bytes
@@ -53,16 +53,17 @@ type AuthenticateMessage struct {
 	Payload []byte
 }
 
+/******************************************************************************/
 func ParseAuthenticateMessage(body []byte, ntlmVersion int) (*AuthenticateMessage, error) {
 	am := new(AuthenticateMessage)
 
 	am.Signature = body[0:8]
-	if !bytes.Equal(am.Signature, []byte("NTLMSSP\x00")) {
+	if !bytes.Equal(am.Signature, []byte(SIGN_NTLMSSP)) {
 		return nil, errors.New("Invalid NTLM message signature")
 	}
 
 	am.MessageType = binary.LittleEndian.Uint32(body[8:12])
-	if am.MessageType != 3 {
+	if am.MessageType != AUTHENTICATE_MESSAGE {
 		return nil, errors.New("Invalid NTLM message type should be 0x00000003 for authenticate message")
 	}
 
@@ -155,6 +156,7 @@ func ParseAuthenticateMessage(body []byte, ntlmVersion int) (*AuthenticateMessag
 	return am, nil
 }
 
+/******************************************************************************/
 func (a *AuthenticateMessage) ClientChallenge() (response []byte) {
 	if a.NtlmV2Response != nil {
 		response = a.NtlmV2Response.NtlmV2ClientChallenge.ChallengeFromClient
@@ -165,6 +167,7 @@ func (a *AuthenticateMessage) ClientChallenge() (response []byte) {
 	return response
 }
 
+/******************************************************************************/
 func (a *AuthenticateMessage) getLowestPayloadOffset() int {
 	payloadStructs := [...]*PayloadStruct{a.LmChallengeResponse, a.NtChallengeResponseFields, a.DomainName, a.UserName, a.Workstation, a.EncryptedRandomSessionKey}
 
@@ -180,6 +183,7 @@ func (a *AuthenticateMessage) getLowestPayloadOffset() int {
 	return lowest
 }
 
+/******************************************************************************/
 func (a *AuthenticateMessage) Bytes() []byte {
 	payloadLen := int(a.LmChallengeResponse.Len + a.NtChallengeResponseFields.Len + a.DomainName.Len + a.UserName.Len + a.Workstation.Len + a.EncryptedRandomSessionKey.Len)
 	messageLen := 8 + 4 + 6*8 + 4 + 8 + 16
@@ -241,6 +245,7 @@ func (a *AuthenticateMessage) Bytes() []byte {
 	return buffer.Bytes()
 }
 
+/******************************************************************************/
 func (a *AuthenticateMessage) String() string {
 	var buffer bytes.Buffer
 
@@ -289,3 +294,5 @@ func (a *AuthenticateMessage) String() string {
 
 	return buffer.String()
 }
+
+/******************************************************************************/
